@@ -5,22 +5,24 @@ services:
       cap_add:
         - NET_ADMIN
       volumes:
-        - '/var/www/html/files/ssd/transmission-data:/data' # mount this folder on sonarr + radarr so they have access to transmission downloads
-        - '/var/www/html/files/'
-        - '/home/pi/Documents/protonvpn-configs/:/etc/openvpn/custom/'
+        - '/mnt/ssd/transmission-data:/data' #change this to a data folder of your liking
+        - '/mnt/ssd' #change this to the root directory of your media-containers
+        - '/home/user/protonvpn-configs/:/etc/openvpn/custom/' #change this to the directory that contains your openvpn file(s)
       environment:
         - OPENVPN_PROVIDER=custom
-        - OPENVPN_CONFIG=openvpn file or country name
-        - OPENVPN_USERNAME=user
-        - OPENVPN_PASSWORD=pass
-        - LOCAL_NETWORK=192.168.178.0/24 # change to your subnet
+        - OPENVPN_CONFIG=<openvpn file path without the file extension>
+        - OPENVPN_USERNAME=<openvpn username>
+        - OPENVPN_PASSWORD=<openvpn password>
+        - LOCAL_NETWORK=192.168.178.0/24 #you might have to change this to your networks range
+        
+        #these settings are curated towards LEECHING, if you want to seed then change them accordingly
         - TRANSMISSION_RPC_WHITELIST_ENABLED=false
         - TRANSMISSION_RPC_AUTHENTICATION_REQUIRED=false
         - TRANSMISSION_IDLE_SEEDING_LIMIT_ENABLED=true
         - TRANSMISSION_IDLE_SEEDING_LIMIT=0
-        - TRANSMISSION_RATIO_LIMIT=0 # disable seeding
+        - TRANSMISSION_RATIO_LIMIT=0
         - TRANSMISSION_RATIO_LIMIT_ENABLED=true
-        - TRANSMISSION_SPEED_LIMIT_UP=0 # disable upload speed to completely disable seeding
+        - TRANSMISSION_SPEED_LIMIT_UP=0
         - TRANSMISSION_SPEED_LIMIT_UP_ENABLED=true
       logging:
         driver: json-file
@@ -31,48 +33,70 @@ services:
         - '7878:7878'
         - '9117:9117'
         - '8989:8989'
+        - '8686:8686'
       image: haugene/transmission-openvpn
 
     radarr:
+      depends_on:
+        - 'transmission-openvpn'
       network_mode: 'service:transmission-openvpn'
       image: lscr.io/linuxserver/radarr
       container_name: radarr
       environment:
         - PUID=33
         - PGID=33
-        - TZ=Europe/Berlin
+        - TZ=Europe/Berlin #change to your timezone
       volumes:
-        - '/var/www/html/files/ssd/radarr-data:/config'
-        - '/var/www/html/files/ssd/transmission-data:/data'
-        - '/var/www/html/files/ssd/movies:/movies'
+        - '/mnt/ssd/radarr-data:/config' #once again, change these to match your filesystem
+        - '/mnt/ssd/transmission-data:/data' #this has to be the same folder as the one mounted for the transmission container
+        - '/mnt/ssd/movies:/movies' #this is where movies will be stored
       restart: unless-stopped
 
     sonarr:
+      depends_on:
+        - 'transmission-openvpn'
       image: linuxserver/sonarr
-      network_mode: "service:transmission-openvpn"
+      network_mode: 'service:transmission-openvpn'
       container_name: sonarr
       environment:
         - PUID=33
         - PGID=33
-        - TZ=Europe/Berlin
-        - UMASK_SET=022 #optional
+        - TZ=Europe/Berlin #change to your timezone
+        - UMASK_SET=022
       volumes:
-        - '/var/www/html/files/ssd/sonarr-data:/config'
-        - '/var/www/html/files/ssd/transmission-data:/data'
-        - '/var/www/html/files/ssd/shows:/shows'
+        - '/mnt/ssd/sonarr-data:/config' #change these again...
+        - '/mnt/ssd/transmission-data:/data' #this also has to be the same
+        - '/mnt/ssd/shows:/shows' #this is where shows/series will be stored
+      restart: unless-stopped
+
+    lidarr:
+      depends_on:
+        - 'transmission-openvpn'
+      network_mode: 'service:transmission-openvpn'
+      image: lscr.io/linuxserver/lidarr
+      container_name: lidarr
+      environment:
+        - PUID=33
+        - PGID=33
+        - TZ=Europe/Berlin #change to your timezone
+      volumes:
+        - '/mnt/ssd/lidarr-data:/config' #change these again...
+        - '/mnt/ssd/music:/music' #this is where music will be stored
+        - '/mnt/ssd/transmission-data:/data' #this has to be the same
       restart: unless-stopped
 
     jackett:
+      depends_on:
+        - 'transmission-openvpn'
       network_mode: 'service:transmission-openvpn'
       image: lscr.io/linuxserver/jackett
       container_name: jackett
       environment:
         - PUID=33
         - PGID=33
-        - TZ=Europe/Berlin
-        - AUTO_UPDATE=true #optional
-        #- RUN_OPTS=
+        - TZ=Europe/Berlin #change to your timezone
+        - AUTO_UPDATE=true
       volumes:
-        - '/var/www/html/files/ssd/jackett-data:/config'
-        - '/var/www/html/files/ssd/jackett-blackhole:/downloads'
+        - '/mnt/ssd/jackett-data:/config' #change accordingly
+        - '/mnt/ssd/jackett-blackhole:/downloads' #as well as this
       restart: unless-stopped
