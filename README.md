@@ -3,7 +3,7 @@ OpenVPN routed docker compose for media downloads
 
 # usage
 configure the file to fit your needs, then create a folder to place it in.
-to start the containers, navigate to the folder containing the 
+to start the containers, navigate to the folder containing the `docker-compose.yml`, then
 
 run `# docker-compose up`
 
