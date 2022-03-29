@@ -31,9 +31,9 @@ services:
       ports:
         - '9091:9091'
         - '7878:7878'
-        - '9117:9117'
         - '8989:8989'
         - '8686:8686'
+        - '9696:9696'
       image: haugene/transmission-openvpn
 
     radarr:
@@ -82,21 +82,19 @@ services:
       volumes:
         - '/mnt/ssd/lidarr-data:/config' #change these again...
         - '/mnt/ssd/music:/music' #this is where music will be stored
-        - '/mnt/ssd/transmission-data:/data' #this has to be the same
+        - '/mnt/ssd/transmission-data:/data' #this has to be the same again
       restart: unless-stopped
 
-    jackett:
+    prowlarr:
       depends_on:
         - 'transmission-openvpn'
       network_mode: 'service:transmission-openvpn'
-      image: lscr.io/linuxserver/jackett
-      container_name: jackett
+      image: lscr.io/linuxserver/prowlarr:develop
+      container_name: prowlarr
       environment:
-        - PUID=33
-        - PGID=33
-        - TZ=Europe/Berlin #change to your timezone
-        - AUTO_UPDATE=true
+        - PUID=1000
+        - PGID=1000
+        - TZ=Europe/Berlin
       volumes:
-        - '/mnt/ssd/jackett-data:/config' #change accordingly
-        - '/mnt/ssd/jackett-blackhole:/downloads' #as well as this
+        - '/mnt/ssd/prowlarr-data:/config' #change this too
       restart: unless-stopped
