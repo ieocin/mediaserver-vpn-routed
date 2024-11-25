@@ -1,21 +1,21 @@
 version: '3.3'
+networks:
+  eth0:
 services:
     transmission-openvpn:
       container_name: transmission
       cap_add:
         - NET_ADMIN
       volumes:
-        - '/mnt/ssd/transmission-data:/data' #change this to a data folder of your liking
-        - '/mnt/ssd' #change this to the root directory of your media-containers
-        - '/home/user/protonvpn-configs/:/etc/openvpn/custom/' #change this to the directory that contains your openvpn file(s)
+        - '/home/nc/ssd/transmission-data:/data' #edit
+        - '/home/nc/ssd/transmission-data/transmission-home/:/config' #edit
+      sysctls:
+        - "net.ipv6.conf.all.disable_ipv6=0"
       environment:
-        - OPENVPN_PROVIDER=custom
-        - OPENVPN_CONFIG=<openvpn file path without the file extension>
-        - OPENVPN_USERNAME=<openvpn username>
-        - OPENVPN_PASSWORD=<openvpn password>
-        - LOCAL_NETWORK=192.168.178.0/24 #you might have to change this to your networks range
-        
-        #these settings are curated towards LEECHING, if you want to seed then change them accordingly
+        - OPENVPN_PROVIDER=
+        - OPENVPN_USERNAME=
+        - OPENVPN_PASSWORD=
+        - LOCAL_NETWORK=192.168.2.0/24
         - TRANSMISSION_RPC_WHITELIST_ENABLED=false
         - TRANSMISSION_RPC_AUTHENTICATION_REQUIRED=false
         - TRANSMISSION_IDLE_SEEDING_LIMIT_ENABLED=true
@@ -28,66 +28,55 @@ services:
         driver: json-file
         options:
           max-size: 10m
+      networks:
+        - eth0
       ports:
         - '9091:9091'
         - '7878:7878'
         - '8989:8989'
         - '8686:8686'
         - '9696:9696'
+        - '8191:8191'
       image: haugene/transmission-openvpn
+      restart: unless-stopped
 
     radarr:
-      depends_on:
-        - 'transmission-openvpn'
       network_mode: 'service:transmission-openvpn'
       image: lscr.io/linuxserver/radarr
       container_name: radarr
       environment:
-        - PUID=33
-        - PGID=33
-        - TZ=Europe/Berlin #change to your timezone
+        - PUID=1000
+        - PGID=1000
+        - TZ=Europe/Berlin
+        - UMASK=002
       volumes:
-        - '/mnt/ssd/radarr-data:/config' #once again, change these to match your filesystem
-        - '/mnt/ssd/transmission-data:/data' #this has to be the same folder as the one mounted for the transmission container
-        - '/mnt/ssd/movies:/movies' #this is where movies will be stored
+        - '/home/nc/arr-data/radarr-data:/config' #edit
+        - '/home/nc/ssd/transmission-data:/data' #edit
+        - '/home/nc/ssd/movies:/movies' #edit
       restart: unless-stopped
 
     sonarr:
-      depends_on:
-        - 'transmission-openvpn'
       image: linuxserver/sonarr
       network_mode: 'service:transmission-openvpn'
       container_name: sonarr
       environment:
-        - PUID=33
-        - PGID=33
-        - TZ=Europe/Berlin #change to your timezone
-        - UMASK_SET=022
+        - PUID=1000
+        - PGID=1000
+        - TZ=Europe/Berlin
+        - UMASK=002
       volumes:
-        - '/mnt/ssd/sonarr-data:/config' #change these again...
-        - '/mnt/ssd/transmission-data:/data' #this also has to be the same
-        - '/mnt/ssd/shows:/shows' #this is where shows/series will be stored
+        - '/home/nc/arr-data/sonarr-data:/config' #edit
+        - '/home/nc/ssd/transmission-data:/data' #edit
+        - '/home/nc/ssd/shows:/shows' #edit
       restart: unless-stopped
 
-    lidarr:
-      depends_on:
-        - 'transmission-openvpn'
+    flaresolverr:
       network_mode: 'service:transmission-openvpn'
-      image: lscr.io/linuxserver/lidarr
-      container_name: lidarr
-      environment:
-        - PUID=33
-        - PGID=33
-        - TZ=Europe/Berlin #change to your timezone
-      volumes:
-        - '/mnt/ssd/lidarr-data:/config' #change these again...
-        - '/mnt/ssd/music:/music' #this is where music will be stored
-        - '/mnt/ssd/transmission-data:/data' #this has to be the same again
+      image: ghcr.io/flaresolverr/flaresolverr:latest
+      container_name: flaresolverr
       restart: unless-stopped
 
     prowlarr:
-      depends_on:
-        - 'transmission-openvpn'
       network_mode: 'service:transmission-openvpn'
       image: lscr.io/linuxserver/prowlarr:develop
       container_name: prowlarr
@@ -96,5 +85,5 @@ services:
         - PGID=1000
         - TZ=Europe/Berlin
       volumes:
-        - '/mnt/ssd/prowlarr-data:/config' #change this too
+        - '/home/nc/arr-data/prowlarr-data:/config' #edit
       restart: unless-stopped
