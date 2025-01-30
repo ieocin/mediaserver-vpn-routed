@@ -4,11 +4,13 @@ networks:
 services:
     transmission-openvpn:
       container_name: transmission
+      devices:
+        - /dev/net/tun
       cap_add:
         - NET_ADMIN
       volumes:
-        - '/home/nc/ssd/transmission-data:/data' #edit
-        - '/home/nc/ssd/transmission-data/transmission-home/:/config' #edit
+        - '/home/user/ssd/transmission-data:/data' #edit
+        - '/home/user/ssd/transmission-data/transmission-home/:/config' #edit
       sysctls:
         - "net.ipv6.conf.all.disable_ipv6=0"
       environment:
@@ -31,12 +33,13 @@ services:
       networks:
         - eth0
       ports:
-        - '9091:9091'
-        - '7878:7878'
-        - '8989:8989'
-        - '8686:8686'
-        - '9696:9696'
-        - '8191:8191'
+        - '9091:9091' # transmission
+        - '7878:7878' # radarr
+        - '8989:8989' # sonarr
+        - '9696:9696' # prowlarr
+        - '8191:8191' # flaresolverr
+        - '8080:8080' # neko
+        - '5055:5055' # jellyseerr
       image: haugene/transmission-openvpn
       restart: unless-stopped
 
@@ -50,9 +53,9 @@ services:
         - TZ=Europe/Berlin
         - UMASK=002
       volumes:
-        - '/home/nc/arr-data/radarr-data:/config' #edit
-        - '/home/nc/ssd/transmission-data:/data' #edit
-        - '/home/nc/ssd/movies:/movies' #edit
+        - '/home/user/arr-data/radarr-data:/config' #edit
+        - '/home/user/ssd/transmission-data:/data' #edit
+        - '/home/user/ssd/movies:/movies' #edit
       restart: unless-stopped
 
     sonarr:
@@ -65,9 +68,9 @@ services:
         - TZ=Europe/Berlin
         - UMASK=002
       volumes:
-        - '/home/nc/arr-data/sonarr-data:/config' #edit
-        - '/home/nc/ssd/transmission-data:/data' #edit
-        - '/home/nc/ssd/shows:/shows' #edit
+        - '/home/user/arr-data/sonarr-data:/config' #edit
+        - '/home/user/ssd/transmission-data:/data' #edit
+        - '/home/user/ssd/shows:/shows' #edit
       restart: unless-stopped
 
     flaresolverr:
@@ -85,5 +88,19 @@ services:
         - PGID=1000
         - TZ=Europe/Berlin
       volumes:
-        - '/home/nc/arr-data/prowlarr-data:/config' #edit
+        - '/home/user/arr-data/prowlarr-data:/config' #edit
+      restart: unless-stopped
+
+    jellyseerr:
+      image: fallenbagel/jellyseerr:latest
+      network_mode: 'service:transmission-openvpn'
+      profiles:
+        - media
+      container_name: jellyseerr
+      environment:
+        - LOG_LEVEL=debug
+        - TZ=Europe/Berlin
+        - PORT=5055 #optional
+      volumes:
+        - '/home/user/arr-data/jellyseerr:/app/config'
       restart: unless-stopped
