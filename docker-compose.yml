@@ -16,6 +16,7 @@ services:
         - OPENVPN_PROVIDER=
         - OPENVPN_USERNAME=
         - OPENVPN_PASSWORD=
+        - OPENVPN_OPTS=--inactive 3600 --ping 10 --ping-exit 60
         - LOCAL_NETWORK=192.168.2.0/24
         - TRANSMISSION_RPC_WHITELIST_ENABLED=false
         - TRANSMISSION_RPC_AUTHENTICATION_REQUIRED=false
@@ -40,7 +41,7 @@ services:
         - '8080:8080' # neko
         - '5055:5055' # jellyseerr
       image: haugene/transmission-openvpn
-      restart: unless-stopped
+      restart: always
 
     radarr:
       network_mode: 'service:transmission-openvpn'
@@ -55,7 +56,7 @@ services:
         - '/home/user/arr-data/radarr-data:/config' #edit
         - '/home/user/ssd/transmission-data:/data' #edit
         - '/home/user/ssd/movies:/movies' #edit
-      restart: unless-stopped
+      restart: always
 
     sonarr:
       image: linuxserver/sonarr
@@ -70,13 +71,13 @@ services:
         - '/home/user/arr-data/sonarr-data:/config' #edit
         - '/home/user/ssd/transmission-data:/data' #edit
         - '/home/user/ssd/shows:/shows' #edit
-      restart: unless-stopped
+      restart: always
 
     flaresolverr:
       network_mode: 'service:transmission-openvpn'
       image: ghcr.io/flaresolverr/flaresolverr:latest
       container_name: flaresolverr
-      restart: unless-stopped
+      restart: always
 
     prowlarr:
       network_mode: 'service:transmission-openvpn'
@@ -88,7 +89,7 @@ services:
         - TZ=Europe/Berlin
       volumes:
         - '/home/user/arr-data/prowlarr-data:/config' #edit
-      restart: unless-stopped
+      restart: always
 
     jellyseerr:
       image: fallenbagel/jellyseerr:latest
@@ -102,4 +103,4 @@ services:
         - PORT=5055 #optional
       volumes:
         - '/home/user/arr-data/jellyseerr:/app/config'
-      restart: unless-stopped
+      restart: always
